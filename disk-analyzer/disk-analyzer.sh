@@ -2,24 +2,40 @@
 
 set -e -o nounset -o pipefail
 
-dir="${1:-/home}"
-
 usage() {
-    echo -e "Usage: $0 [OPTION]... \n"
-    echo "Options:"
-    echo -e "  -d  specify the directory to be analyzed. Default: /home \n"
-    echo "Examples:"
-    echo "  ./disk-analyzer             # Will analyze /home"
-    echo "  ./disk-analyazer -d /tmp    # Will analyze /tmp"
+    cat <<EOF
+Usage: ./$0 [OPTION]...
+
+Options:
+  -d  specify the directory to be analyzed. Default: /home
+
+Examples:
+  ./disk-analyzer             # Will analyze /home
+  ./disk-analyzer -d /tmp     # Will analyze /tmp        
+
+EOF
+    exit 1
 }
+
+# Processing options
+if [[ "$#" -eq 0 ]]; then
+    dir="/home"
+elif [[ "$#" -eq 2 ]]; then
+    getopts "d:" opt
+        case "$opt" in
+            d) dir="$OPTARG";;
+            \?) usage;;
+         esac
+else
+    usage
+fi
 
 dir_size() {
-    du -hs "$dir"
+    du -hs "$1"
 }
 
-
 main () {
-    dir_size
+    dir_size "$dir"
 }
 
 main
