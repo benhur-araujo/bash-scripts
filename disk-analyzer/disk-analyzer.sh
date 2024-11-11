@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -o nounset -o pipefail
+set -e -o nounset
 
 usage() {
     cat <<EOF
@@ -19,25 +19,40 @@ EOF
     exit 1
 }
 
-# Processing options
-if [[ "$#" -eq 0 ]]; then
-    dir="/home"
-else
-    while getopts "r:d:" opt; do
-        case "$opt" in
-            r) max_depth="$OPTARG";;
-            d) dir="$OPTARG";;
-            \?) usage;;
-         esac
-     done
-fi
+# Default directory & recursivity level
+dir="/home"
+max_depth=0
+
+disk_summary() {
+    echo "### Disks Summary  ###"
+    df -h
+    echo -e "\n### Root level consumption ###"
+    du -hs -t 1m /* 2> /dev/null | sort -h
+}
 
 dir_size() {
-    du -h -d "$1" "$2"
+    echo -e "\n### Directory disk usage ###"
+    du -hd "$1" "$2" | sort -h
 }
+
+# Processing options
+while getopts "r:d:s" opt; do
+    case "$opt" in
+        s) disk_summary;;
+        r) max_depth="$OPTARG";;
+        d) dir="$OPTARG";;
+        \?) usage;;
+     esac
+ done
+
 
 main () {
-    dir_size "${max_depth:-0}" "$dir"
+    if [[ "$#" -eq 0 ]]; then
+        disk_summary
+        exit 1
+    fi
+    
+    dir_size $max_depth "$dir"
 }
 
-main
+main "$@"
