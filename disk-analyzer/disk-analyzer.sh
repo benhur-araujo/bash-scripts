@@ -37,14 +37,23 @@ disk_summary() {
         echo "$unused_packages"
     fi
 
-    echo -e "\n# Disk spaced used by apt cache"
+    echo -e "\n# Disk space used by apt cache"
     sudo du -sh /var/cache/apt
 
     echo -e "\n# Disk space used by logs"
     journalctl --disk-usage
 
-    echo -e "\n# Disk space used by snap revisions"
+    echo -e "\n# Disk space used by old snap revisions"
     du -hs /var/lib/snapd/snaps
+    
+    # TODO
+    # List disabled snap revisions
+    # old_snaps="$(snap list --all | awk '/disabled/{print $1, $3}')"
+    # Example output: firefox 5014    
+
+    # for each snap, use du to check how much space the disabled snap is consuming
+    # for snap listed above: du -hs /var/lib/snapd/snaps/firefox_5014.snap
+    # Grep by each snap size and sum them all. Output the total size
 }
 
 dir_size() {
