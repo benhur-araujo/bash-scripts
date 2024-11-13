@@ -21,8 +21,7 @@ EOF
     exit 1
 }
 
-# Default directory & recursivity level
-dir="/home"
+# Default recursivity level
 max_depth=0
 
 disk_summary() {
@@ -38,13 +37,13 @@ disk_summary() {
         echo "$unused_packages"
     fi
 
-    echo -e "\n Disk spaced used by apt cache"
+    echo -e "\n# Disk spaced used by apt cache"
     sudo du -sh /var/cache/apt
 
-    echo -e "\n # Disk space used by logs #"
+    echo -e "\n# Disk space used by logs"
     journalctl --disk-usage
 
-    echo -e "\n # Disk space used by old snap revisions"
+    echo -e "\n# Disk space used by snap revisions"
     du -hs /var/lib/snapd/snaps
 }
 
