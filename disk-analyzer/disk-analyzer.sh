@@ -64,6 +64,15 @@ dir_size() {
 }
 
 clean_up() {
+    while true; do
+        read -p "Do you want to clean the disk? y/n: " clean
+        case "${clean,,}" in
+            y) break;;
+            n) exit 0;;
+            *) echo "Invalid, press 'y' or 'n'.";;
+        esac
+    done
+    
     echo -e "\n# Removing unused apt packages and old kernels..."
     sudo apt autoremove > /dev/null 2>&1
     sudo apt clean > /dev/null 2>&1
@@ -81,7 +90,6 @@ clean_up() {
     echo "Done!"
 }
 
-# Processing options
 get_opts() {
     clean="false"
     while getopts "r:d:cs" opt; do
@@ -101,6 +109,7 @@ main () {
     
     if [[ "${show_summary:-false}" == "true" ]]; then
         disk_summary
+        clean_up
     elif [[ "$clean" == "true" ]]; then
         clean_up
     elif [[ -n "${dir:-}" ]]; then
@@ -112,14 +121,7 @@ main () {
         fi
     else
         disk_summary
-        while true; do
-            read -p "Do you want to clean the disk? y/n: " clean
-            case "${clean,,}" in
-                y) clean_up && exit 0;;
-                n) exit 0;;
-                *) echo "Invalid, press 'y' or 'n'.";;
-            esac
-        done
+        clean_up
     fi
 }
 
