@@ -44,16 +44,16 @@ disk_summary() {
     journalctl --disk-usage
 
     echo -e "\n# Disk space used by old snap revisions"
-    du -hs /var/lib/snapd/snaps
-    
-    # TODO
-    # List disabled snap revisions
-    # old_snaps="$(snap list --all | awk '/disabled/{print $1, $3}')"
-    # Example output: firefox 5014    
+    snaps_dir="/var/lib/snapd/snaps/"
+    snaps_size=0
 
-    # for each snap, use du to check how much space the disabled snap is consuming
-    # for snap listed above: du -hs /var/lib/snapd/snaps/firefox_5014.snap
-    # Grep by each snap size and sum them all. Output the total size
+    while read snap revision; do
+        size=$(du "$snaps_dir"/"$snap"_"$revision".snap | awk '{print $1}')
+        snaps_size=$(( $snaps_size + $size ))
+    done < <(snap list --all | awk '/disabled/{print $1, $3}')
+
+    readable_snaps_size=$(numfmt --from-unit=1K --to=iec $snaps_size)
+    echo $readable_snaps_size
 }
 
 dir_size() {
