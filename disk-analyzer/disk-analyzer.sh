@@ -7,15 +7,15 @@ usage() {
 Usage: ./$0 [OPTION]...
 
 Options:
-  -d  specify the directory to be analyzed.
-  -r  set recursively level. Default: 0
-  -s  show disk summary.
-  -c  clean unnecessary logs, files & apt packages.
+  -d DIR    specify the directory to be analyzed.
+  -r LEVEL  set recursively level. Default: 0
+  -s        show disk summary.
+  -c        clean unnecessary logs, files & apt packages.
 
 Examples:
-  ./disk-analyzer              # Show disk summary
-  ./disk-analyzer -d /tmp      # Will analyze /tmp
-  ./disk-analyzer -r 1 -d /tmp # Will analyze /tmp and /tmp/*
+  ./$0                  # Show disk summary
+  ./$0 -d /tmp          # Will analyze /tmp
+  ./$0 -r 1 -d /tmp     # Will analyze /tmp and /tmp/*
 
 EOF
     exit 1
@@ -57,8 +57,10 @@ disk_summary() {
 }
 
 dir_size() {
+    local depth="$1"
+    local dir="$2"
     echo -e "\n### Directory disk usage ###"
-    du -hd "$1" "$2" | sort -h
+    du -hd "$depth" "$dir" | sort -h
 }
 
 clean_up() {
@@ -80,36 +82,44 @@ clean_up() {
 }
 
 # Processing options
-clean="false"
-while getopts "r:d:c" opt; do
-    case "$opt" in
-        c) clean="true";;
-        r) max_depth="$OPTARG";;
-        d) dir="$OPTARG";;
-        \?) usage;;
-     esac
- done
+get_opts() {
+    clean="false"
+    while getopts "r:d:cs" opt; do
+        case "$opt" in
+            c) clean="true";;
+            s) show_summary="true";;
+            r) max_depth="$OPTARG";;
+            d) dir="$OPTARG";;
+            *) usage;;
+         esac
+     done
+}
 
 
 main () {
-    if [[ "$#" -eq 0 ]]; then
+    get_opts "$@"
+    
+    if [[ "${show_summary:-false}" == "true" ]]; then
         disk_summary
-        
-        clean=""
+    elif [[ "$clean" == "true" ]]; then
+        clean_up
+    elif [[ -n "${dir:-}" ]]; then
+        if [[ -d "$dir" ]]; then
+            dir_size "$max_depth" "$dir"
+        else
+            echo "Error: Directory $dir does not exist."
+            exit 1
+        fi
+    else
+        disk_summary
         while true; do
             read -p "Do you want to clean the disk? y/n: " clean
-            
             case "${clean,,}" in
-                y) clean_up && exit 1;;
-                n) exit 1;;
+                y) clean_up && exit 0;;
+                n) exit 0;;
                 *) echo "Invalid, press 'y' or 'n'.";;
             esac
         done
-    elif [[ $clean == "true" ]]; then
-        clean_up
-        exit 1
-    else 
-        dir_size $max_depth "$dir"
     fi
 }
 
