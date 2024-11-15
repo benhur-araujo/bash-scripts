@@ -53,7 +53,7 @@ disk_summary() {
     done < <(snap list --all | awk '/disabled/{print $1, $3}')
 
     readable_snaps_size=$(numfmt --from-unit=1K --to=iec $snaps_size)
-    echo $readable_snaps_size
+    echo -e "$readable_snaps_size\n"
 }
 
 dir_size() {
@@ -62,25 +62,27 @@ dir_size() {
 }
 
 clean_up() {
-    echo -e "\n # Removing unused apt packages and old kernels..."
-    sudo apt autoremove
-    sudo apt clean
+    echo -e "\n# Removing unused apt packages and old kernels..."
+    sudo apt autoremove > /dev/null 2>&1
+    sudo apt clean > /dev/null 2>&1
+    echo "Done!"
     
-    echo -e "\n # Deleting system logs older than 3d..."
-    sudo journalctl --vacuum-time=3d
+    echo -e "\n# Deleting system logs older than 3d..."
+    sudo journalctl --vacuum-time=3d > /dev/null 2>&1
+    echo "Done!"
 
-    echo -e "\n # Deleting old revisions of snaps..."
+    echo -e "\n# Deleting old revisions of snaps..."
     snap list --all | awk '/disabled/{print $1, $3}' |
     while read snapname revision; do
-        sudo snap remove "$snapname" --revision="$revision"
+        sudo snap remove "$snapname" --revision="$revision" > /dev/null 2>&1
     done
+    echo "Done!"
 }
 
 # Processing options
 clean="false"
-while getopts "r:d:sc" opt; do
+while getopts "r:d:c" opt; do
     case "$opt" in
-        s) disk_summary;;
         c) clean="true";;
         r) max_depth="$OPTARG";;
         d) dir="$OPTARG";;
@@ -92,15 +94,23 @@ while getopts "r:d:sc" opt; do
 main () {
     if [[ "$#" -eq 0 ]]; then
         disk_summary
-        exit 1
-    fi
-    
-    if [[ $clean == "true" ]]; then
+        
+        clean=""
+        while true; do
+            read -p "Do you want to clean the disk? y/n: " clean
+            
+            case "${clean,,}" in
+                y) clean_up && exit 1;;
+                n) exit 1;;
+                *) echo "Invalid, press 'y' or 'n'.";;
+            esac
+        done
+    elif [[ $clean == "true" ]]; then
         clean_up
         exit 1
+    else 
+        dir_size $max_depth "$dir"
     fi
-    
-    dir_size $max_depth "$dir"
 }
 
 main "$@"
