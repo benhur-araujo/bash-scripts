@@ -38,10 +38,10 @@ disk_summary() {
     fi
 
     echo -e "\n# Disk space used by apt cache"
-    sudo du -sh /var/cache/apt
+    sudo du -sh /var/cache/apt | awk '{print $1}'
 
     echo -e "\n# Disk space used by logs"
-    journalctl --disk-usage
+    journalctl --disk-usage | grep -oE '[0-9]+(\.[0-9]+)?[KMG]'
 
     echo -e "\n# Disk space used by old snap revisions"
     snaps_dir="/var/lib/snapd/snaps/"
