@@ -91,7 +91,6 @@ clean_up() {
 }
 
 get_opts() {
-    clean="false"
     while getopts "r:d:cs" opt; do
         case "$opt" in
             c) clean="true";;
@@ -107,10 +106,10 @@ get_opts() {
 main () {
     get_opts "$@"
     
-    if [[ "${show_summary:-false}" == "true" ]]; then
+    if [[ "${show_summary:-}" == "true" ]]; then
         disk_summary
         clean_up
-    elif [[ "$clean" == "true" ]]; then
+    elif [[ "${clean:-}" == "true" ]]; then
         clean_up
     elif [[ -n "${dir:-}" ]]; then
         if [[ -d "$dir" ]]; then
