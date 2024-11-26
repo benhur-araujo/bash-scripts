@@ -65,7 +65,12 @@ pomodoro() {
         if [[ $ran_times -lt 3 ]]; then
             notify-send "Focus time ended! Go to a short break!"
             echo -n $'\a'
-            short_break
+            
+            read -p "Focs time ended! Want a short break? y/n" decision
+            case ${decision,,} in
+                y) short_break;;
+                *) exit 1;;
+            esac    
         else
             notify-send "Well done! You completed a full cycle!"
             echo -n $'\a'
