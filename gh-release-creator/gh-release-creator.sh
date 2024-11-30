@@ -1,8 +1,14 @@
 #!/bin/bash
 
+usage() {
+    echo "$0 PROGRAM_NAME SEMVER"
+    echo "E.g: $0 focus-chunker minor"
+    exit 1
+}
+
 # Get the latest repo tag
 get_latest_tag() {
-  git tag --sort=-v:refname | head -n 1 | tr -d "v"
+  git tag --sort=-v:refname | grep "$1" | head -n 1 | sed "s/$1-v//"
 }
 
 # Increment the version
@@ -21,8 +27,6 @@ increment_version() {
       patch=0
   elif [[ "${commit_type,,}" == "patch" ]]; then
       patch=$((patch + 1))
-  else
-      echo "Invalid commit type";
   fi
   
   echo "v$major.$minor.$patch"
@@ -30,27 +34,32 @@ increment_version() {
 
 create_github_release() {
   local tag=$1
-  gh release create "$tag" --title "Release $tag" --notes "Automated release for version $tag"
+  gh release create "$tag" --title "$tag" --notes "Automated release for version $tag"
 }
 
 main() {
-  commit_type="${1:-patch}"
-  latest_tag=$(get_latest_tag)
+  scope="$1"
+  commit_type="${2:-patch}"
+  if [[ "$commit_type" != "major" && "$commit_type" != "minor" && "$commit_type" != "patch" ]]; then
+      usage
+  fi
+
+  latest_tag=$(get_latest_tag "$scope")
   
   if [[ -z "$latest_tag" ]]; then
-    tag="v1.0.0"   
+    tag="$scope-v1.0.0"   
     git tag "$tag"
     git push origin "$tag"
     create_github_release "$tag"
-    echo "No tags found in the repository. Created v1.0.0."
+    echo "No tags found in the repository. Created tag $tag"
   else
       new_tag=$(increment_version "$latest_tag" "$commit_type")
-      git tag "$new_tag"
-      git push origin "$new_tag" &> /dev/null
-      echo "Created and pushed new tag: $new_tag"
+      git tag "$scope-$new_tag"
+      git push origin "$scope-$new_tag" &> /dev/null
+      echo "Created and pushed new tag: $scope-$new_tag"
 
-      create_github_release "$new_tag" &> /dev/null
-      echo "Created GitHub release for tag: $new_tag"
+      create_github_release "$scope-$new_tag" &> /dev/null
+      echo "Created GitHub release for tag: $scope-$new_tag"
   fi
 }
 
