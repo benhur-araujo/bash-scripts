@@ -53,10 +53,17 @@ pomodoro() {
             min_focusing=$((i / 60))
             if [[ $min_focusing -eq 0 ]]; then
                 echo "Focusing for $i seconds"
+                sleep 1
             else
-                echo "Focusing for $min_focusing" minutes
+                read -n 1 -t 1 -s -p "Focusing for $min_focusing minutes. Press p to pause." pause
+                if [[ "$pause" == "p" ]]; then
+                    echo -e "\n"
+                    read -n 1 -s -p "Paused. Press r to resume." pause
+                    if [[ "$pause" == "r" ]]; then
+                        continue
+                    fi
+                fi
             fi
-            sleep 1
         done
         
         ran_times=$((ran_times + 1))
