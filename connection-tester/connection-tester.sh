@@ -64,9 +64,19 @@ test_internet() {
     fi
 }
 
+test_dns_resolution() {
+    resolve="$(dig +timeout=2 +retry=0 ifconfig.me | grep -i "timed out")"
+    if [[ -n "$resolve" ]]; then
+        echo "Name Resolution is BAD!"
+    else
+        echo "Name Resolution is GOOD!"
+    fi
+}
+
 main() {
     test_lan
     test_internet
+    test_dns_resolution
 }
 
 main "$1"
