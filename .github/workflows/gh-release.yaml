@@ -1,0 +1,44 @@
+name: GitHub Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".github/**"
+      - "README.md"
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set Up Git
+        run: |
+          git config --global user.name "benhur-araujo"
+          git config --global user.email "benhur.araujo.silva@gmail.com"
+
+      - name: Get which scripts were changed
+        run: |
+          changed_scripts="$(git diff --name-only HEAD HEAD~1 | grep -E '^(connection-tester|focus-chunker|git-tag-deleter|disk-analyzer|gh-release-creator|linux-bootstraper|system-updater)/')"
+          echo "$changed_scripts" >> $GITHUB_ENV
+
+      - name: Determine commit type
+        run: |
+          commit_message="$(git log -1 --pretty=%B)"
+          if [[ "$commit_message" == *"feat!"* ]]; then
+            echo "COMMIT_TYPE=major" >> $GITHUB_ENV
+          elif [[ "$commit_message" == *"feat"* ]]; then
+            echo "COMMIT_TYPE=minor" >> $GITHUB_ENV
+          else
+            echo "COMMIT_TYPE=patch" >> $GITHUB_ENV
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for script in "$changed_scripts"; do
+            script_name="$(dirname $script)"
+            ./gh-release-creator/gh-release-creator.sh "$script_name" "$COMMIT_TYPE"
+          done
