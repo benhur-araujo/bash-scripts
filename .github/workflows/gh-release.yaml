@@ -1,5 +1,5 @@
 name: GitHub Release
-
+#
 on:
   push:
     branches:
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set Up Git
         run: |
@@ -21,8 +23,8 @@ jobs:
 
       - name: Get which scripts were changed
         run: |
-          changed_scripts="$(git diff --name-only HEAD HEAD~1 | grep -E '^(connection-tester|focus-chunker|git-tag-deleter|disk-analyzer|gh-release-creator|linux-bootstraper|system-updater)/')"
-          echo "$changed_scripts" >> $GITHUB_ENV
+          changed_scripts=$(dirname "$(git diff --name-only HEAD HEAD~1 | grep -E '^(connection-tester|focus-chunker|git-tag-deleter|disk-analyzer|gh-release-creator|linux-bootstraper|system-updater)/')")
+          echo "changed_scripts=$changed_scripts" >> $GITHUB_ENV
 
       - name: Determine commit type
         run: |
@@ -33,12 +35,12 @@ jobs:
             echo "COMMIT_TYPE=minor" >> $GITHUB_ENV
           else
             echo "COMMIT_TYPE=patch" >> $GITHUB_ENV
+          fi
 
       - name: Create release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for script in "$changed_scripts"; do
-            script_name="$(dirname $script)"
-            ./gh-release-creator/gh-release-creator.sh "$script_name" "$COMMIT_TYPE"
+            ./gh-release-creator/gh-release-creator.sh "$script" "$COMMIT_TYPE"
           done
