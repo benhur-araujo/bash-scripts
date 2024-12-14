@@ -1,12 +1,11 @@
 name: GitHub Release
-#
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
     paths-ignore:
       - ".github/**"
       - "README.md"
+
 jobs:
   create-release:
     runs-on: ubuntu-latest
@@ -16,31 +15,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set Up Git
+      - name: Get changed scripts
         run: |
-          git config --global user.name "benhur-araujo"
-          git config --global user.email "benhur.araujo.silva@gmail.com"
-
-      - name: Get which scripts were changed
-        run: |
-          changed_scripts=$(dirname "$(git diff --name-only HEAD HEAD~1 | grep -E '^(connection-tester|focus-chunker|git-tag-deleter|disk-analyzer|gh-release-creator|linux-bootstraper|system-updater)/')")
+          changed_scripts=$(dirname $(git diff --name-only origin/main...HEAD) | sort -u | grep -Ev "(\.|\.github)")
           echo "changed_scripts=$changed_scripts" >> $GITHUB_ENV
 
       - name: Determine commit type
         run: |
-          commit_message="$(git log -1 --pretty=%B)"
-          if [[ "$commit_message" == *"feat!"* ]]; then
-            echo "COMMIT_TYPE=major" >> $GITHUB_ENV
-          elif [[ "$commit_message" == *"feat"* ]]; then
-            echo "COMMIT_TYPE=minor" >> $GITHUB_ENV
-          else
-            echo "COMMIT_TYPE=patch" >> $GITHUB_ENV
-          fi
+          declare -A commit_types
+          for script in $changed_scripts; do
+              commit_message=$(git log -1 --pretty=%B -- "$script")
+              if [[ "$commit_message" == *"feat!"* ]]; then
+                  commit_types[$script]="major"
+              elif [[ "$commit_message" == *"feat"* ]]; then
+                  commit_types[$script]="minor"
+              else
+                  commit_types[$script]="patch"
+              fi
+          done
+        
+          for script in "${!commit_types[@]}"; do
+              echo "$script=${commit_types[$script]}" >> $GITHUB_ENV
+          done
 
+      - name: Output changed scripts and commit types
+        run: |
+          for script in $changed_scripts; do
+            commit_type=$(printenv "$script")
+            echo "Changed script: $script. Commit type: $commit_type"
+          done
+          
       - name: Create release
+        if: github.event.pull_request.merged == true 
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for script in "$changed_scripts"; do
-            ./gh-release-creator/gh-release-creator.sh "$script" "$COMMIT_TYPE"
+          for script in $changed_scripts; do
+            commit_type=$(printenv "$script")
+            ./gh-release-creator/gh-release-creator.sh "$script" "$commit_type"
           done
