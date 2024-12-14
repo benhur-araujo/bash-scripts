@@ -1,7 +1,8 @@
 name: GitHub Release
+
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, closed, reopened, synchronize]
     paths-ignore:
       - ".github/**"
       - "README.md"
@@ -13,7 +14,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+
+      - name: Fetch main branch
+        run: git fetch origin main
 
       - name: Get changed scripts
         run: |
