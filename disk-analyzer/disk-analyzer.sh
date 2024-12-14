@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 set -e -o nounset
 
 usage() {

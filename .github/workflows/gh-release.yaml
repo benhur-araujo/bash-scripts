@@ -22,7 +22,7 @@ jobs:
 
       - name: Get changed scripts
         run: |
-          changed_scripts=$(dirname $(git diff --name-only origin/main...HEAD) | sort -u | grep -Ev "(\.|\.github)")
+          changed_scripts="$(dirname $(git diff --name-only origin/main...HEAD) | sort -u | grep -Ev "(\^.|\.github)" | tr '\n' ' ')"
           echo "changed_scripts=$changed_scripts" >> $GITHUB_ENV
 
       - name: Determine commit type
