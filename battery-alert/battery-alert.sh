@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-THRESHOLD=85
+THRESHOLD=80
 BATTERY="BAT0"
 NOTIFIED=0
 
