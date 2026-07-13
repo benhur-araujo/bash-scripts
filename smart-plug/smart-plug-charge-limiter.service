@@ -1,0 +1,17 @@
+[Unit]
+Description=Battery charge limiter via TP-Link Tapo smart plug
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Credentials + KASA_HOST live here (chmod 600, NOT in the repo). See env.example.
+EnvironmentFile=%h/.config/smart-plug/env
+# Absolute path to the pipx-installed CLI, since a user unit has a minimal PATH.
+Environment=KASA_BIN=%h/.local/bin/kasa
+ExecStart=%h/github-projects/bash-scripts/smart-plug/smart-plug-charge-limiter.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=default.target
