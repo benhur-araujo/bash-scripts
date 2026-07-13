@@ -9,9 +9,12 @@
 # The `kasa` CLI reads these from the environment; export them before running
 # (e.g. from ~/.profile or a systemd unit) so no credentials live in this repo:
 #
-#   export KASA_HOST=192.168.0.91
+#   export KASA_ALIAS="Tapo P110"          # the plug's name in the Tapo app
 #   export KASA_USERNAME=you@example.com
 #   export KASA_PASSWORD=your-tplink-password
+#
+# The plug is located by its alias via UDP discovery on every switch, so a
+# fixed/reserved IP is NOT required.
 
 set -u
 
@@ -24,9 +27,12 @@ INTERVAL=15
 # when PATH is minimal (e.g. a systemd unit): KASA_BIN=$HOME/.local/bin/kasa
 KASA_BIN="${KASA_BIN:-kasa}"
 
-: "${KASA_HOST:?Set KASA_HOST to the smart plug IP}"
 : "${KASA_USERNAME:?Set KASA_USERNAME to your TP-Link account email}"
 : "${KASA_PASSWORD:?Set KASA_PASSWORD to your TP-Link account password}"
+
+# Locate the plug by alias, discovered each time, so a dynamic IP is fine.
+: "${KASA_ALIAS:?Set KASA_ALIAS to the plug alias (its name in the Tapo app)}"
+TARGET=(--alias "$KASA_ALIAS")
 
 command -v "$KASA_BIN" >/dev/null 2>&1 || {
     echo "kasa CLI not found: '$KASA_BIN'. Install with 'pipx install python-kasa'," \
@@ -36,10 +42,11 @@ command -v "$KASA_BIN" >/dev/null 2>&1 || {
 
 plug_state="unknown"   # unknown | on | off
 
-# Switch the plug; on success update plug_state.
+# Switch the plug; on success update plug_state. When targeting by alias the
+# `kasa` CLI rediscovers the current IP, so this self-heals across IP changes.
 set_plug() {
     local action="$1"
-    if "$KASA_BIN" --host "$KASA_HOST" "$action" >/dev/null 2>&1; then
+    if "$KASA_BIN" "${TARGET[@]}" "$action" >/dev/null 2>&1; then
         plug_state="$action"
     fi
 }

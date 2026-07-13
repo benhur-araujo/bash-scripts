@@ -23,20 +23,24 @@ default, which makes the plug unreachable locally.
 
 ## Configuration
 
-The script reads three variables from the environment (the `kasa` CLI picks
-these up natively, so no credentials live in the repo):
+The plug is located by its **alias** (its name in the Tapo app) via UDP
+discovery, so it works even when your router hands it a different IP each time —
+no reserved/static IP required.
 
-| Variable        | Meaning                          |
-|-----------------|----------------------------------|
-| `KASA_HOST`     | Smart plug IP address            |
-| `KASA_USERNAME` | TP-Link account email            |
-| `KASA_PASSWORD` | TP-Link account password         |
-| `KASA_BIN`      | Path to `kasa` (default: `kasa`) |
+The script reads these variables from the environment (the `kasa` CLI picks
+credentials up natively, so none live in the repo):
+
+| Variable        | Meaning                                              |
+|-----------------|------------------------------------------------------|
+| `KASA_ALIAS`    | Plug's name in the Tapo app (used to discover it)    |
+| `KASA_USERNAME` | TP-Link account email                                |
+| `KASA_PASSWORD` | TP-Link account password                             |
+| `KASA_BIN`      | Path to `kasa` (default: `kasa`)                     |
 
 ## Run manually
 
 ```bash
-export KASA_HOST=192.168.0.91
+export KASA_ALIAS="Tapo P110"
 export KASA_USERNAME=you@example.com
 export KASA_PASSWORD=...
 ./smart-plug-charge-limiter.sh

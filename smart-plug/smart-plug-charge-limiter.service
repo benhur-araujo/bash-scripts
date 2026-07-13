@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Credentials + KASA_HOST live here (chmod 600, NOT in the repo). See env.example.
+# Credentials + KASA_ALIAS live here (chmod 600, NOT in the repo). See env.example.
 EnvironmentFile=%h/.config/smart-plug/env
 # Absolute path to the pipx-installed CLI, since a user unit has a minimal PATH.
 Environment=KASA_BIN=%h/.local/bin/kasa
